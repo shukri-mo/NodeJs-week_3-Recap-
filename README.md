@@ -207,6 +207,3 @@ Steps:
 
 ---
 
-Let me know if you'd like this exported as a PDF!
-
-add the title Gabi school since i want to share this student's 
