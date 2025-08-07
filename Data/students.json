@@ -1,0 +1,44 @@
+[
+  {
+    "id": "1",
+    "name": "Ahmed",
+    "age": 25,
+    "country": "Somalia",
+    "createdAt": "2023-10-01T12:00:00Z"
+  },
+  {
+    "id": "2",
+    "name": "Ahmed",
+    "age": 25,
+    "country": "Somalia",
+    "createdAt": "2023-10-01T12:00:00Z"
+  },
+  {
+    "id": "3",
+    "name": "Ahmed",
+    "age": 25,
+    "country": "Somalia",
+    "createdAt": "2023-10-01T12:00:00Z"
+  },
+  {
+    "id": 4,
+    "name": "shukri",
+    "age": null,
+    "country": "somalia",
+    "createdAt": "2025-08-07T01:24:33.001Z"
+  },
+  {
+    "id": 5,
+    "name": "xamse",
+    "age": null,
+    "country": "somalia",
+    "createdAt": "2025-08-07T01:25:41.497Z"
+  },
+  {
+    "id": "6",
+    "name": "salmaan",
+    "age": null,
+    "country": "somalia",
+    "createdAt": "2025-08-07T01:27:17.561Z"
+  }
+]
