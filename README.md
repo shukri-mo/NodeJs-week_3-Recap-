@@ -1,209 +1,243 @@
-# Week 1 
+# 📚 Student Management API (Node.js + Express + Prisma + Supabase)
 
-# 📘 Student API - Express + JSON File Storage
-
-A simple Express.js API for managing student data stored in a JSON file. This project demonstrates basic CRUD operations (Create, Read) using Node.js, Express, and file system modules.
+This project is a **simple REST API** for managing students using:
+- **Express** for the server
+- **Prisma ORM** for database access
+- **PostgreSQL** (hosted on Supabase)
+- **CRUD operations** (Create, Read, Update, Delete)
 
 ---
 
-## 📁 Project Structure
+## 🗂 Project Structure
 
 ```
-project/
-├── Data/
-│   └── students.json       # The student data file (acts as a database)
+.
+├── studentServices/
+│   └── studentservice.js   # All database logic (CRUD)
 ├── routes/
-│   └── studentRoutes.js    # This is the main file where API logic exists
-├──  index.js       # Your server entry point
+│   └── student.js          # Express routes/endpoints
+├── prisma/
+│   └── schema.prisma       # Database schema
+├── lib/
+│   └── prisma.js           # Prisma client initialization
+├── server.js               # Main server entry point
+├── .env                    # Environment variables (Supabase connection)
+└── README.md               # Project documentation
 ```
 
 ---
 
-## ⚙️ Key Technologies
+## ⚙ 1. `schema.prisma`
 
-* **Node.js**
-* **Express.js**
-* **fs/promises** for file system interactions
-* **path** & **fileURLToPath** for resolving file paths with ESM
+This file defines the **database structure** for Prisma.
+
+```prisma
+model Student {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  age       Int
+  grade     String
+  major     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("students")
+}
+```
+
+**Key points:**
+- `@id @default(autoincrement())` → Automatically increments student IDs.
+- `@unique` → Email must be unique.
+- `createdAt` & `updatedAt` → Auto-managed timestamps.
+- `@@map("students")` → Table name in PostgreSQL will be **students**.
 
 ---
 
-## 📌 Code Explanation by Section
+## 🗄 2. `.env`
 
-### 1. **Import Required Modules**
+Stores sensitive database connection info.
 
+```
+DIRECT_URL="postgresql://<user>:<password>@<host>:5432/<database>"
+```
+
+---
+
+## 🔌 3. `lib/prisma.js`
+
+Initializes Prisma Client.
+
+```js
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+export default prisma;
+```
+
+---
+
+## 🛠 4. `studentServices/studentservice.js`
+
+This file contains **all database logic**.
+
+### Functions:
+
+#### `getStudents()`
+- Fetches all students.
+- Uses `prisma.student.findMany()`.
+
+#### `getStudentById(id)`
+- Fetches one student by **ID**.
+
+#### `createStudent(studentData)`
+1. Validates required fields (`name`, `email`).
+2. Checks if email already exists.
+3. Creates a new student.
+
+#### `deleteStudent(id)`
+- Deletes student by **ID**.
+
+#### `updateStudent(id, studentData)`
+1. Validates fields.
+2. Checks if student exists.
+3. Updates student details.
+
+---
+
+## 🌐 5. `routes/student.js`
+
+Handles HTTP requests and connects them to the **service functions**.
+
+### Endpoints:
+
+| Method | Endpoint         | Description                     |
+|--------|------------------|---------------------------------|
+| GET    | `/students`      | Get all students                |
+| GET    | `/students/:id`  | Get a student by ID              |
+| POST   | `/students`      | Create a new student             |
+| DELETE | `/students/:id`  | Delete a student                 |
+| PUT    | `/students/:id`  | Update student details           |
+
+Example route:
+```js
+router.get("/students", async (req, res) => {
+  try {
+    const students = await getStudents();
+    res.json(students);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch students" });
+  }
+});
+```
+
+---
+
+## 🚀 6. `server.js`
+
+Main entry point that:
+1. Loads environment variables.
+2. Starts Express server.
+3. Uses routes from `student.js`.
+
+Example:
 ```js
 import express from "express";
-import fs from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
+import studentRoutes from "./routes/student.js";
+
+const app = express();
+app.use(express.json());
+app.use("/api", studentRoutes);
+
+app.listen(3000, () => {
+  console.log("Server running on http://localhost:3000");
+});
 ```
-
-These modules allow you to create an Express server and work with the file system to store and read student data.
-
-### 2. **Initialize Express Router**
-
-```js
-const router = express.Router();
-```
-
-This router is used to define and group your student-related routes.
-
-### 3. **Setup File Paths**
-
-```js
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const dataFilePath = path.join(__dirname, "../Data/students.json");
-```
-
-This ensures that you’re correctly targeting the path to your JSON data file using ES modules.
 
 ---
 
-## 📥 Helper Functions
+## 📦 7. Installation & Setup
 
-### 🧾 `getAllStudents()`
+1️⃣ **Clone the repository**
+```sh
+git clone <repo-url>
+cd <project-folder>
+```
 
-Reads and returns all students from the file.
+2️⃣ **Install dependencies**
+```sh
+npm install
+```
 
-```js
-async function getAllStudents() {
-  try {
-    const data = await fs.readFile(dataFilePath, "utf-8");
-    return JSON.parse(data);
-  } catch (error) {
-    console.error("Error reading data:", error);
-  }
+3️⃣ **Set up `.env`**
+```sh
+DIRECT_URL="postgresql://<user>:<password>@<host>:5432/<database>"
+```
+
+4️⃣ **Generate Prisma Client**
+```sh
+npm run db:generate 
+```
+
+5️⃣ **Run migrations**
+```sh
+npm run db:migrate
+```
+
+6️⃣ **Start the server**
+```sh
+npm run dev
+```
+
+---
+
+## 📬 Example API Requests
+
+**Create a Student**
+```http
+POST /api/students
+Content-Type: application/json
+
+{
+  "name": "xaliimo faarax",
+  "email": "xaliimo@example.com",
+  "age": 20,
+  "grade": "A",
+  "major": "Computer Science"
 }
 ```
 
-### 📝 `writeStudent(newStudent)`
-
-Writes updated student list to the file.
-
-```js
-async function writeStudent(newStudent) {
-  await fs.writeFile(dataFilePath, JSON.stringify(newStudent, null, 2));
-}
-```
-
----
-
-## 🚀 API Endpoints
-
-### 📍 GET `/students`
-
-Returns all students.
-
-```js
-router.get("/students", async (req, res) => { ... })
-```
-
-### 📍 GET `/students/:id`
-
-Returns one student by ID.
-
-```js
-router.get("/students/:id", async (req, res) => { ... })
-```
-
-* Uses `req.params.id`
-* Looks up student by matching ID
-
-### 📍 POST `/students`
-
-Adds a new student.
-
-```js
-router.post("/students", async (req, res) => { ... })
-```
-
-Steps:
-
-1. Validate required fields (e.g., `name` must exist)
-2. Read existing students
-3. **Generate a new unique ID**:
-
-   * **Method 1**: Get the last student's ID and add 1 (commented in your code)
-
-     ```js
-     const newId = parseInt(students[students.length - 1].id) + 1;
-     ```
-   * **Method 2**: Use `Math.max()` to find the highest ID and add 1 (used in your code)
-
-     ```js
-     const newId = students.length > 0 ? Math.max(...students.map(student => parseInt(student.id))) + 1 : 1;
-     ```
-4. Push the new student into the array
-5. Write back to JSON file
-6. Return `201 Created` with new student object
-
----
-
-## ❗ Error Codes and Messages
-
-| HTTP Code | Message                      | Reason                     |
-| --------- | ---------------------------- | -------------------------- |
-| 200       | OK                           | Successful GET request     |
-| 201       | Created                      | Successfully added student |
-| 400       | Please provide at least name | Missing required fields    |
-| 404       | Student not found            | No student matched by ID   |
-| 500       | Failed to read/write data    | File read or write error   |
-
----
-
-## 💡 Tips & Notes
-
-* Ensure `students.json` file exists with an array (`[]`) if it's initially empty.
-* Use `express.json()` middleware in your main server file to parse JSON request bodies.
-
-  ```js
-  app.use(express.json());
-  ```
-* Validate and sanitize inputs on production-level apps.
-* Consider using a UUID library for generating IDs in real-world apps.
-
----
-
-
-## 🧪 Sample Student Object
-
+**Response**
 ```json
 {
-  "id": "1",
-  "name": "Ahmed",
-  "age": 25,
-  "country": "Somalia",
-  "createdAt": "2023-10-01T12:00:00Z"
+  "message": "Student created successfully",
+  "newStudent": {
+    "id": 1,
+    "name": "xaliimo faarax",
+    "email": "xaliimo@example.com",
+    "age": 20,
+    "grade": "A",
+    "major": "Computer Science",
+    "createdAt": "2025-08-13T00:00:00.000Z",
+    "updatedAt": "2025-08-13T00:00:00.000Z"
+  }
 }
 ```
 
 ---
 
-## ✅ How to Test with Postman
+## 🎨 Request Flow Diagram
 
-* **GET all students**:
-
-  ```http
-  GET http://localhost:3000/api/students
-  ```
-* **GET single student**:
-
-  ```http
-  GET http://localhost:3000/api/students/1
-  ```
-* **POST new student**:
-
-  ```http
-  POST http://localhost:3000/api/students
-  Body (JSON):
-  {
-    "name": "Asha",
-    "age": 22,
-    "country": "Somalia"
-  }
-  ```
-
----
-
+```plaintext
+🖥️ Client (Frontend or Postman)
+        │   Sends HTTP Request (GET, POST, PUT, DELETE)
+        ▼
+🚏 Express Routes  (routes/student.js)
+        │   Matches endpoint & method
+        ▼
+🛠 Service Layer   (studentservice.js)
+        │   Runs Prisma queries
+        ▼
+🗄 Prisma ORM      (lib/prisma.js)
+        │   Converts JS code → SQL queries
+        ▼
+🐘 PostgreSQL Database (Supabase)
