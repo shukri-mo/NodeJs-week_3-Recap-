@@ -2,6 +2,7 @@ import express from "express";
 // const express= require("express");
 import cors from "cors";
 import bodyParser from "body-parser";   
+import notes from "./routes/notes.js";
 import studentRoutes from "./routes/students.js";
 //step 1 : Intial express
 const app= express();
@@ -11,8 +12,10 @@ const PORT=process.env.PORT || 3000
 //All enpoints 
 app.use(bodyParser.json())  //to parse json data
 app.use(cors())  //to allow cross origin requests
-app.use("/api",studentRoutes)   //you can group different apis under one route
 
+
+app.use("/api",notes)   //you can group different apis under one route
+app.use("/api",studentRoutes)   //you can group different apis under one route
 
 // app.use('*',(req,res)=>{
 //     res.status(404).json({
