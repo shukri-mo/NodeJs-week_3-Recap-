@@ -1,6 +1,6 @@
 
 import express from "express";
-import { getStudents,getStudentById,createStudent,deleteStudent,updateStudent} from "../studentServices/studentservice.js";
+import { getStudents,getStudentById,createStudent,deleteStudent,updateStudent} from "../Services/studentservice.js";
 //intial express router
 const router = express.Router();
 
