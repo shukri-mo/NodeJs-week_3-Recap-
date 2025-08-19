@@ -27,11 +27,11 @@ export async function getNoteById(id) {
 
 export async function createNote(noteData) {
   try {
-    const { title, content } = noteData;
+    const { title, content,studentId } = noteData;
 
     //1. validate
 
-    if (!title || !content) {
+    if (!title || !content || !studentId) {
       throw new Error("Missing Required Fields");
     }
     //2.  check if email already exist
@@ -48,6 +48,7 @@ export async function createNote(noteData) {
       data: {
         title,
         content,
+        studentId,
       },
    
     });
