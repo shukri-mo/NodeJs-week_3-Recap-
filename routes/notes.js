@@ -1,11 +1,12 @@
 
 import express from "express";
+import {authenticateToken} from "../middleWare/Auth.js";
 import { getNotes,getNoteById,createNote,deleteNote,updateNote} from "../Services/notesServices.js";
 //intial express router
 const router = express.Router();
 
 //endpoints
-router.get("/notes", async (req, res) => {
+router.get("/notes",authenticateToken, async (req, res) => {
   try {
     const notes = await getNotes();
     res.json(notes);
@@ -15,7 +16,7 @@ router.get("/notes", async (req, res) => {
 });
 
 //get one note
-router.get("/notes/:id", async (req, res) => {
+router.get("/notes/:id",authenticateToken, async (req, res) => {
   try {
     const{id}=req.params;
     const note = await getNoteById(id);
@@ -29,11 +30,11 @@ router.get("/notes/:id", async (req, res) => {
 });
 
 //add note
-router.post("/notes", async (req, res) => {
+router.post("/notes",authenticateToken, async (req, res) => {
   try {
     //1. add new note data
-    const { title, content } = req.body;
-    const newNote = await createNote({ title, content });
+    const { title, content,studentId } = req.body;
+    const newNote = await createNote({ title, content,studentId });
     res.status(201).json({
       message: "Note created successfully",
       newNote
@@ -48,7 +49,7 @@ router.post("/notes", async (req, res) => {
 
 
 //delete note
-router.delete("/notes/:id", async (req, res) => {
+router.delete("/notes/:id",authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     await deleteNote(id);
@@ -64,7 +65,7 @@ router.delete("/notes/:id", async (req, res) => {
 });
 
 //update function
-router.put("/notes/:id", async (req, res) => {
+router.put("/notes/:id", authenticateToken,async (req, res) => {
   try {
     const { id } = req.params;
     const updatedNote = await updateNote(id, req.body);
