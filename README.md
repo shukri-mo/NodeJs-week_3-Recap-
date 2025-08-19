@@ -1,6 +1,3 @@
-Here’s the explanation of the **Authentication** and **Middleware** sections along with the full README file in one place. You can easily copy and paste it:
-
----
 
 # Node.js with Prisma - Student and Notes Management System
 
