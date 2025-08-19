@@ -1,243 +1,254 @@
-# 📚 Student Management API (Node.js + Express + Prisma + Supabase)
-
-This project is a **simple REST API** for managing students using:
-- **Express** for the server
-- **Prisma ORM** for database access
-- **PostgreSQL** (hosted on Supabase)
-- **CRUD operations** (Create, Read, Update, Delete)
+Here’s the explanation of the **Authentication** and **Middleware** sections along with the full README file in one place. You can easily copy and paste it:
 
 ---
 
-## 🗂 Project Structure
+# Node.js with Prisma - Student and Notes Management System
 
-```
-.
-├── studentServices/
-│   └── studentservice.js   # All database logic (CRUD)
-├── routes/
-│   └── student.js          # Express routes/endpoints
-├── prisma/
-│   └── schema.prisma       # Database schema
-├── lib/
-│   └── prisma.js           # Prisma client initialization
-├── server.js               # Main server entry point
-├── .env                    # Environment variables (Supabase connection)
-└── README.md               # Project documentation
-```
+This project is a basic **Node.js** API that uses **Prisma ORM** for database management, built with **Express.js**. It allows for the management of students and notes in a **PostgreSQL** database. This API includes routes for user registration, login, creating and managing student data, as well as adding and managing notes.
 
----
+## Project Structure
 
-## ⚙ 1. `schema.prisma`
+* **lib/**: Contains the Prisma client instance (`prisma.js`) to interact with the database.
+* **middleware/**: Contains the authentication middleware (`Auth.js`) to protect routes and validate JWT tokens.
+* **models/**: Contains the Prisma schema defining the `Student` and `Note` models, along with their relationships.
+* **routes/**: Contains the Express routes that handle HTTP requests for students and notes.
+* **services/**: Contains the business logic for interacting with the database, such as CRUD operations for students and notes.
+* **.env**: Contains environment variables, such as `JWT_SECRET` and database connection URL.
 
-This file defines the **database structure** for Prisma.
+## Prerequisites
 
-```prisma
-model Student {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  age       Int
-  grade     String
-  major     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+* Node.js installed on your machine.
+* A PostgreSQL database set up.
+* Prisma ORM for database interaction.
+* JWT (JSON Web Token) for authentication.
 
-  @@map("students")
-}
-```
+## Installation
 
-**Key points:**
-- `@id @default(autoincrement())` → Automatically increments student IDs.
-- `@unique` → Email must be unique.
-- `createdAt` & `updatedAt` → Auto-managed timestamps.
-- `@@map("students")` → Table name in PostgreSQL will be **students**.
+1. Clone this repository:
 
----
+   ```bash
+   git clone https://github.com/your-repository-url.git
+   cd your-repository-folder
+   ```
 
-## 🗄 2. `.env`
+2. Install dependencies:
 
-Stores sensitive database connection info.
+   ```bash
+   npm install
+   ```
 
-```
-DIRECT_URL="postgresql://<user>:<password>@<host>:5432/<database>"
-```
+3. Set up your `.env` file with the necessary environment variables:
 
----
+   ```bash
+   JWT_SECRET=your-secret-key
+   DIRECT_URL=your-postgresql-database-url
+   ```
 
-## 🔌 3. `lib/prisma.js`
+4. Generate Prisma client:
 
-Initializes Prisma Client.
+   ```bash
+   npx prisma generate
+   ```
+
+5. Run Prisma migration to set up the database:
+
+   ```bash
+   npx prisma migrate dev
+   ```
+
+6. Start the server:
+
+   ```bash
+   npm start
+   ```
+
+## API Endpoints
+
+### Student Routes
+
+1. **POST /register**: Registers a new student.
+
+   * **Request Body**:
+
+     ```json
+     {
+       "name": "caasha cali",
+       "email": "caasha@example.com",
+       "password": "password123",
+       "age": 25,
+       "grade": "A",
+       "major": "Computer Science"
+     }
+     ```
+   * **Response**:
+
+     * Returns a `JWT` token and the student data (excluding password).
+
+2. **POST /login**: Authenticates a student and returns a `JWT` token.
+
+   * **Request Body**:
+
+     ```json
+     {
+       "email": "caasha@example.com",
+       "password": "password123"
+     }
+     ```
+   * **Response**:
+
+     * Returns a `JWT` token and the student data (excluding password).
+
+3. **GET /students**: Retrieves a list of all students.
+
+4. **GET /students/\:id**: Retrieves a single student by ID.
+
+5. **POST /students**: Adds a new student (Requires `admin` privileges).
+
+6. **DELETE /students/\:id**: Deletes a student by ID.
+
+7. **PUT /students/\:id**: Updates student data by ID.
+
+### Notes Routes
+
+1. **GET /notes**: Retrieves all notes (Requires authentication).
+
+2. **GET /notes/\:id**: Retrieves a specific note by ID (Requires authentication).
+
+3. **POST /notes**: Adds a new note (Requires authentication).
+
+   * **Request Body**:
+
+     ```json
+     {
+       "title": "New Note",
+       "content": "Note content",
+       "studentId": "student-id"
+     }
+     ```
+   * **Response**:
+
+     * Returns the created note.
+
+4. **DELETE /notes/\:id**: Deletes a note by ID (Requires authentication).
+
+5. **PUT /notes/\:id**: Updates a note by ID (Requires authentication).
+
+## JWT Authentication Middleware
+
+### Authentication Middleware (`Auth.js`)
+
+The **`authenticateToken`** middleware is a critical component for protecting routes that require authentication. It validates the JWT token in the `Authorization` header and ensures that only authenticated users can access protected routes.
+
+* **Step 1**: Extract the token from the `Authorization` header.
+  The token is expected to be in the `Authorization` header as a Bearer token:
+
+  ```bash
+  Authorization: Bearer <JWT_TOKEN>
+  ```
+
+* **Step 2**: Verify the token.
+  The `jsonwebtoken` package is used to verify the token's validity. If the token is valid, the next step will proceed.
+
+* **Step 3**: Retrieve the student data associated with the token.
+  The `studentId` from the decoded token is used to fetch the corresponding student from the database. This student data is then attached to the `req.student` object, making it available for downstream routes.
+
+* **Step 4**: If no valid token is found or the student is not found, the request will be blocked, and a `403` status code will be returned, indicating that the token is either invalid or expired.
+
+### Middleware Code Example
 
 ```js
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
-export default prisma;
-```
+import jwt from "jsonwebtoken";
+import prisma from "../lib/prisma.js";
 
----
-
-## 🛠 4. `studentServices/studentservice.js`
-
-This file contains **all database logic**.
-
-### Functions:
-
-#### `getStudents()`
-- Fetches all students.
-- Uses `prisma.student.findMany()`.
-
-#### `getStudentById(id)`
-- Fetches one student by **ID**.
-
-#### `createStudent(studentData)`
-1. Validates required fields (`name`, `email`).
-2. Checks if email already exists.
-3. Creates a new student.
-
-#### `deleteStudent(id)`
-- Deletes student by **ID**.
-
-#### `updateStudent(id, studentData)`
-1. Validates fields.
-2. Checks if student exists.
-3. Updates student details.
-
----
-
-## 🌐 5. `routes/student.js`
-
-Handles HTTP requests and connects them to the **service functions**.
-
-### Endpoints:
-
-| Method | Endpoint         | Description                     |
-|--------|------------------|---------------------------------|
-| GET    | `/students`      | Get all students                |
-| GET    | `/students/:id`  | Get a student by ID              |
-| POST   | `/students`      | Create a new student             |
-| DELETE | `/students/:id`  | Delete a student                 |
-| PUT    | `/students/:id`  | Update student details           |
-
-Example route:
-```js
-router.get("/students", async (req, res) => {
+// Middleware to validate the token
+export const authenticateToken = async (req, res, next) => {
   try {
-    const students = await getStudents();
-    res.json(students);
+    // Step 1: Get the token from the header in req
+    const tokenHeader = req.headers["authorization"];
+    const token = tokenHeader && tokenHeader.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "No token provided",
+      });
+    }
+
+    // Step 2: Verify the token
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "mySecret"
+    );
+
+    // Step 3: Get student info using studentId from the token
+    const student = await prisma.student.findUnique({
+      where: { id: decoded.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        age: true,
+        grade: true,
+        major: true,
+      }
+    });
+
+    // Check if student exists
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Invalid Token, student not found",
+      });
+    }
+
+    // Attach student to the request object
+    req.student = student;
+    next();
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch students" });
+    console.error("Auth middleware error", error);
+    return res.status(403).json({
+      success: false,
+      message: "Invalid or expired token",
+    });
   }
-});
+};
 ```
 
----
+This middleware ensures that all routes requiring authentication are protected. It’s used in routes like **GET /notes**, **POST /notes**, etc., where access to the data should be restricted to authenticated students only.
 
-## 🚀 6. `server.js`
+## Services
 
-Main entry point that:
-1. Loads environment variables.
-2. Starts Express server.
-3. Uses routes from `student.js`.
+* **Prisma Client**: Used to interact with the database, including querying students and notes.
+* **JWT Authentication**: Each request requiring authentication uses JWT to validate and authenticate users.
+* **Error Handling**: The application returns appropriate error messages for invalid or missing data, as well as for server errors.
 
-Example:
-```js
-import express from "express";
-import studentRoutes from "./routes/student.js";
+## Prisma Schema
 
-const app = express();
-app.use(express.json());
-app.use("/api", studentRoutes);
+### Student Model
 
-app.listen(3000, () => {
-  console.log("Server running on http://localhost:3000");
-});
-```
+* **id**: The unique identifier for a student (String).
+* **name**: The student's name (String).
+* **email**: The student's email (String, unique).
+* **age**: The student's age (Int).
+* **grade**: The student's grade (String).
+* **major**: The student's major (String).
+* **password**: The student's hashed password (String).
+* **createdAt**: The timestamp when the student was created (DateTime).
+* **updatedAt**: The timestamp when the student was last updated (DateTime).
+* **notes**: A relationship with the `Note` model, where a student can have many notes.
 
----
+### Note Model
 
-## 📦 7. Installation & Setup
+* **id**: The unique identifier for a note (Int).
+* **title**: The note's title (String, unique).
+* **content**: The content of the note (String).
+* **createdAt**: The timestamp when the note was created (DateTime).
+* **updatedAt**: The timestamp when the note was last updated (DateTime).
+* **studentId**: The foreign key linking the note to a student (String).
+* **student**: A relation to the `Student` model, indicating which student the note belongs to.
 
-1️⃣ **Clone the repository**
-```sh
-git clone <repo-url>
-cd <project-folder>
-```
+## Notes
 
-2️⃣ **Install dependencies**
-```sh
-npm install
-```
+* **JWT Secret**: Always use a secure secret for generating JWT tokens. In production, store it securely (e.g., in environment variables).
+* **Token Expiry**: The JWT token expires in one day by default (`expiresIn: "1d"`). You can change this in the `jsonwebtoken` configuration.
+* **Authorization Header**: When making requests to protected routes (e.g., `/notes`), always include the JWT token in the `Authorization` header.
 
-3️⃣ **Set up `.env`**
-```sh
-DIRECT_URL="postgresql://<user>:<password>@<host>:5432/<database>"
-```
-
-4️⃣ **Generate Prisma Client**
-```sh
-npm run db:generate 
-```
-
-5️⃣ **Run migrations**
-```sh
-npm run db:migrate
-```
-
-6️⃣ **Start the server**
-```sh
-npm run dev
-```
-
----
-
-## 📬 Example API Requests
-
-**Create a Student**
-```http
-POST /api/students
-Content-Type: application/json
-
-{
-  "name": "xaliimo faarax",
-  "email": "xaliimo@example.com",
-  "age": 20,
-  "grade": "A",
-  "major": "Computer Science"
-}
-```
-
-**Response**
-```json
-{
-  "message": "Student created successfully",
-  "newStudent": {
-    "id": 1,
-    "name": "xaliimo faarax",
-    "email": "xaliimo@example.com",
-    "age": 20,
-    "grade": "A",
-    "major": "Computer Science",
-    "createdAt": "2025-08-13T00:00:00.000Z",
-    "updatedAt": "2025-08-13T00:00:00.000Z"
-  }
-}
-```
-
----
-
-## 🎨 Request Flow Diagram
-
-```plaintext
-🖥️ Client (Frontend or Postman)
-        │   Sends HTTP Request (GET, POST, PUT, DELETE)
-        ▼
-🚏 Express Routes  (routes/student.js)
-        │   Matches endpoint & method
-        ▼
-🛠 Service Layer   (studentservice.js)
-        │   Runs Prisma queries
-        ▼
-🗄 Prisma ORM      (lib/prisma.js)
-        │   Converts JS code → SQL queries
-        ▼
-🐘 PostgreSQL Database (Supabase)
